@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use App\Models\Campaign;
+use App\Models\Contact;
+
+class SetTest extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'sms:track';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'tracker added';
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
+    public function handle()
+    {
+        $campaigns = Campaign::select('campaigns.*','templates.template_name as campaign_template_name','templates.template_text as campaign_template_text','templates.template_id','segments.segment_name as campaign_segment_name','users.name as campaign_sender_name')
+        ->join('templates', 'campaigns.campaign_template_id', '=', 'templates.template_id')
+        ->join('segments', 'campaigns.campaign_segment_id', '=', 'segments.segment_id')
+        ->join('users', 'campaigns.campaign_sender_id', '=', 'users.id')
+        ->get();
+        if(! empty($campaigns)){
+            foreach($campaigns as $camp){
+                $i = 0;
+                $campaign_id=$camp['campaign_id'];
+                $message=$camp['campaign_template_text'];
+                $contacts = Contact::select('contacts.*')->where('group_id', $camp['campaign_segment_id'])->get();
+                foreach($contacts as $c){
+                    $data['campaign_id'] = $campaign_id;
+                    $data['status'] = $i;
+                    $data['contact'] = $c['contact_number'];
+                    $data['message'] = $message;
+                    // if (substr($data['contact'], 0, 3) === "880") {
+                    //     $data['status'] = $i+1;
+                    //     \DB::table('send_sms_trackers')->insert($data);
+                    //     dispatch(new SendSMS($campaign_name, $campaign_phone));
+                    // }else{
+                    //     $data['status'] = $i;
+                    //     \DB::table('send_sms_trackers')->insert($data);
+                    // }
+                    \DB::table('send_sms_trackers')->insert($data);
+                    dispatch(new SendSMS($campaign_name, $campaign_phone));
+                
+                }
+    
+                // Campaign::where('campaign_id)', $campaign_id)->update(['campaign_server_status' => 1]);
+
+
+
+                
+            }
+
+        }
+        
+      
+    }
+}
+
+ foreach($contacts as $c){
+               
+                $data['status'] = $i;
+                $data['contact'] = $c['contact_number'];
+                $data['created_at'] = now()->format('Y-m-d H:i:s');
+                $data['updated_at'] = now()->format('Y-m-d H:i:s');
+             
+                \DB::table('send_sms_trackers')->insert($data);
+                // dispatch(new SendSMS($message, $data['contact']));
+                }
